@@ -1,0 +1,4 @@
+Model,Best Params,MAE,RMSE,MAPE (%),R2
+Support Vector Regression,"{'model__C': 0.1, 'model__epsilon': 0.5, 'model__gamma': 'scale', 'model__kernel': 'linear'}",1.1412388269705,1.707233007656759,11.862092537172336,0.9087816972775276
+Random Forest Regression,"{'model__max_depth': None, 'model__min_samples_leaf': 2, 'model__min_samples_split': 10, 'model__n_estimators': 100}",1.9558157643513487,3.053231210881125,15.655217515684791,0.7082467007306974
+Linear Regression,{'model__fit_intercept': True},3.48019546554419,11.463251038441594,22.509899966427625,-3.1125576233714733
