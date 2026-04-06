@@ -20,10 +20,11 @@ def load_model():
     model_path = "model_pipeline_fix.joblib"
 
     if not os.path.exists(model_path):
-        st.error(f"❌ Model tidak ditemukan: {model_path}")
+        st.error("Model tidak ditemukan!")
         st.stop()
 
-    return joblib.load(model_path)
+    model = joblib.load(model_path)
+    return model
 
 model = load_model()
 
@@ -33,9 +34,7 @@ model = load_model()
 UNDERSTOCK_THRESHOLD = 5
 OVERSTOCK_THRESHOLD = 50
 
-# ================================
-# FUNGSI KLASIFIKASI
-# ================================
+
 def classify_stock(stock):
     if stock < UNDERSTOCK_THRESHOLD:
         return "Understock"
@@ -44,25 +43,33 @@ def classify_stock(stock):
     else:
         return "Normal"
 
+
 # ================================
 # HEADER
 # ================================
 st.title("📊 Sistem Prediksi Stok Barang")
+
 st.markdown("""
-Aplikasi ini digunakan untuk memprediksi stok barang menggunakan Machine Learning  
-untuk menghindari kondisi:
-- ⚠️ **Understock** (< 5)
-- 📦 **Overstock** (> 50)
+Aplikasi ini digunakan untuk memprediksi stok barang menggunakan Machine Learning.
+
+Menghindari kondisi:
+- ⚠️ **Understock (<5)**
+- 📦 **Overstock (>50)**
 """)
 
 # ================================
-# SIDEBAR INPUT
+# SIDEBAR INPUT MANUAL
 # ================================
 st.sidebar.header("🔧 Input Data Manual")
 
-jumlah_penjualan = st.sidebar.number_input("Jumlah Penjualan", min_value=0, value=10)
-stok_awal = st.sidebar.number_input("Stok Awal", min_value=0, value=20)
-stok_masuk = st.sidebar.number_input("Stok Masuk", min_value=0, value=15)
+jumlah_penjualan = st.sidebar.number_input(
+    "Jumlah Penjualan", min_value=0, value=10)
+
+stok_awal = st.sidebar.number_input(
+    "Stok Awal", min_value=0, value=20)
+
+stok_masuk = st.sidebar.number_input(
+    "Stok Masuk", min_value=0, value=15)
 
 prediksi_btn = st.sidebar.button("🔍 Prediksi")
 
@@ -70,9 +77,17 @@ prediksi_btn = st.sidebar.button("🔍 Prediksi")
 # PREDIKSI MANUAL
 # ================================
 if prediksi_btn:
+
     try:
-        input_data = np.array([[jumlah_penjualan, stok_awal, stok_masuk]])
+
+        input_data = pd.DataFrame({
+            "jumlah_penjualan": [jumlah_penjualan],
+            "stok_awal": [stok_awal],
+            "stok_masuk": [stok_masuk]
+        })
+
         prediction = model.predict(input_data)[0]
+
         status = classify_stock(prediction)
 
         st.subheader("📈 Hasil Prediksi")
@@ -87,8 +102,10 @@ if prediksi_btn:
 
         if status == "Understock":
             st.error("⚠️ Stok terlalu sedikit! Segera restock.")
+
         elif status == "Overstock":
             st.warning("📦 Stok terlalu banyak! Kurangi pembelian.")
+
         else:
             st.success("✅ Stok dalam kondisi aman.")
 
@@ -96,27 +113,49 @@ if prediksi_btn:
         st.error(f"Terjadi error: {e}")
 
 # ================================
-# UPLOAD CSV
+# UPLOAD FILE
 # ================================
 st.markdown("---")
-st.subheader("📂 Prediksi Banyak Data (Upload CSV)")
+st.subheader("📂 Prediksi Banyak Data (Upload File)")
 
 st.info("Pastikan kolom: jumlah_penjualan, stok_awal, stok_masuk")
 
-uploaded_file = st.file_uploader("Upload file", type=["csv","xlsx"])
+uploaded_file = st.file_uploader(
+    "Upload CSV atau Excel", type=["csv", "xlsx"]
+)
 
 if uploaded_file is not None:
+
     try:
-        df = pd.read_csv(uploaded_file)
 
-        st.write("📄 Data Awal", df.head())
+        # membaca file
+        if uploaded_file.name.endswith(".csv"):
+            df = pd.read_csv(uploaded_file)
 
-        if st.button("🚀 Proses Prediksi"):
-            required_columns = ["jumlah_penjualan", "stok_awal", "stok_masuk"]
-            if not all(col in df.columns for col in required_columns):
-                st.error("Kolom tidak sesuai! Harus ada: jumlah_penjualan, stok_awal, stok_masuk")
-            else:
+        elif uploaded_file.name.endswith(".xlsx"):
+            df = pd.read_excel(uploaded_file)
+
+        st.write("📄 Preview Data")
+        st.dataframe(df.head())
+
+        required_columns = [
+            "jumlah_penjualan",
+            "stok_awal",
+            "stok_masuk"
+        ]
+
+        # cek kolom
+        if not all(col in df.columns for col in required_columns):
+
+            st.error(
+                "Kolom tidak sesuai! Harus ada: jumlah_penjualan, stok_awal, stok_masuk")
+
+        else:
+
+            if st.button("🚀 Jalankan Prediksi"):
+
                 X = df[required_columns]
+
                 predictions = model.predict(X)
 
                 df["Predicted_Stock"] = predictions
@@ -127,6 +166,9 @@ if uploaded_file is not None:
                 st.subheader("📊 Hasil Prediksi")
                 st.dataframe(df)
 
+                # ================================
+                # VISUALISASI
+                # ================================
                 st.subheader("📉 Visualisasi")
 
                 col1, col2 = st.columns(2)
@@ -139,7 +181,10 @@ if uploaded_file is not None:
                     st.write("Prediksi Stok")
                     st.line_chart(df["Predicted_Stock"])
 
-                csv = df.to_csv(index=False).encode('utf-8')
+                # ================================
+                # DOWNLOAD
+                # ================================
+                csv = df.to_csv(index=False).encode("utf-8")
 
                 st.download_button(
                     label="📥 Download Hasil Prediksi",
@@ -149,6 +194,7 @@ if uploaded_file is not None:
                 )
 
     except Exception as e:
+
         st.error(f"Terjadi error saat membaca file: {e}")
 
 # ================================
