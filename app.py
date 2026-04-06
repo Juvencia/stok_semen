@@ -103,7 +103,7 @@ st.subheader("📂 Prediksi Banyak Data (Upload CSV)")
 
 st.info("Pastikan kolom: jumlah_penjualan, stok_awal, stok_masuk")
 
-uploaded_file = st.file_uploader("Upload file CSV", type=["csv"])
+uploaded_file = st.file_uploader("Upload file", type=["csv","xlsx"])
 
 if uploaded_file is not None:
     try:
